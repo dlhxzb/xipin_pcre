@@ -1,0 +1,11 @@
+[package]
+name = "xipin_pcre"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+libc = "0.2"
+
+[build-dependencies]
+cc = { version = "1", features = ["parallel"] }
+pkg-config = "0.3.13"
