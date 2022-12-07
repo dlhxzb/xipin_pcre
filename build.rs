@@ -129,7 +129,8 @@ fn main() {
     if env::var("PCRE2_SYS_DEBUG").unwrap_or(String::new()) == "1" {
         builder.debug(true);
     }
-    builder.flag("-std=c99").compile("libpcre2.a"); // 为pcre 10.40的`for int i=0`添加c99支持
+    builder.flag("-Wno-unused-variable").compile("libpcre2.a");
+    // builder.flag("-std=c99").compile("libpcre2.a"); // 为pcre 10.40的`for int i=0`添加c99支持
 }
 
 fn has_git() -> bool {
