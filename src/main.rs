@@ -38,7 +38,7 @@ fn main() {
             peers.iter().for_each(|src| {
                 println!("Send `{}` to {src}", &SUBJECT[start..end]);
                 socket
-                    .send_to(&SUBJECT[start..end].as_bytes(), src)
+                    .send_to(SUBJECT[start..end].as_bytes(), src)
                     .inspect_err(|e| println!("Udp send failed {e:?}"));
             });
         }

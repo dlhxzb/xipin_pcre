@@ -28,7 +28,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 // Files that PCRE2 needs to compile.
-const FILES: &'static [&'static str] = &[
+const FILES: &[&str] = &[
     "pcre2_auto_possess.c",
     "pcre2_compile.c",
     "pcre2_config.c",
@@ -63,7 +63,7 @@ fn main() {
     let out = PathBuf::from(env::var_os("OUT_DIR").unwrap());
 
     // Don't link to a system library if we want a static build.
-    let want_static = pcre2_sys_static().unwrap_or(target.contains("musl"));
+    let want_static = pcre2_sys_static().unwrap_or_else(|| target.contains("musl"));
     if !want_static && pkg_config::probe_library("libpcre2-8").is_ok() {
         return;
     }
@@ -71,7 +71,7 @@ fn main() {
     // For a static build, make sure our PCRE2 submodule has been loaded.
     if has_git() && !Path::new("pcre2/.git").exists() {
         Command::new("git")
-            .args(&["submodule", "update", "--init"])
+            .args(["submodule", "update", "--init"])
             .status()
             .unwrap();
     }
@@ -126,7 +126,7 @@ fn main() {
         builder.file(Path::new("pcre2/src").join(file));
     }
 
-    if env::var("PCRE2_SYS_DEBUG").unwrap_or(String::new()) == "1" {
+    if env::var("PCRE2_SYS_DEBUG").unwrap_or_default() == "1" {
         builder.debug(true);
     }
     builder.flag("-Wno-unused-variable").compile("libpcre2.a");
