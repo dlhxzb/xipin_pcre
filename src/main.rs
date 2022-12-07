@@ -1,15 +1,49 @@
 #![allow(non_camel_case_types, unused)]
+#![feature(result_option_inspect)]
 
 mod bindings;
+
+use std::net::UdpSocket;
+use std::sync::mpsc::channel;
+use std::time::Duration;
 
 use bindings::*;
 
 const PATTERN: &str = r"\d{4,}([^\d\s\n\r\f\t\v]{3,13}).+?";
 const SUBJECT: &str = "a;jhgoqoghqoj0329 u0tyu10hg0h9Y0Y9827342482y(Y0y(G)_)lajf;lqjfgqhgpqjopjqa=)(^!@#$%^&())9999999";
+const UDP_ADDR: &str = "127.0.0.1:34254";
 
 fn main() {
-    let (start, end) = find(SUBJECT).unwrap();
-    dbg!(&SUBJECT[start..end]);
+    let socket = UdpSocket::bind(UDP_ADDR).expect("Failed to bind Udp port");
+    println!("Udp Server started at {UDP_ADDR}, may run client.sh now");
+
+    let socket_recv = socket.try_clone().expect("Failed to clone socket");
+    let (tx, rx) = channel();
+
+    std::thread::spawn(move || loop {
+        let mut buf = [0; 10];
+        let (amt, src) = socket_recv
+            .recv_from(&mut buf)
+            .expect("Didn't receive data");
+        println!("{src} connected {}", String::from_utf8_lossy(&buf[..amt]));
+        tx.send(src);
+    });
+
+    let mut peers = vec![];
+    loop {
+        while let Ok(src) = rx.try_recv() {
+            peers.push(src);
+        }
+        if let Some((start, end)) = find(SUBJECT) {
+            peers.iter().for_each(|src| {
+                println!("Send `{}` to {src}", &SUBJECT[start..end]);
+                socket
+                    .send_to(&SUBJECT[start..end].as_bytes(), src)
+                    .inspect_err(|e| println!("Udp send failed {e:?}"));
+            });
+        }
+        std::thread::sleep(Duration::from_secs(2))
+    }
 }
 
 fn find(subject: &str) -> Option<(usize, usize)> {
